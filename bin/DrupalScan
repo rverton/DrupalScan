@@ -1,0 +1,52 @@
+#!/usr/bin/env ruby
+
+require 'DrupalScan'
+require 'optparse'
+
+options = {}
+opts = OptionParser.new do |opts|
+	opts.banner = "Usage: DrupalScan <url> [--no-module-lookup]"
+
+	opts.on("-u URL", "--url URL", "URL of drupal project. Example: http://drupal.org") do |v|
+		if !v.match /^http/
+			puts opts
+			exit
+		end
+
+		options[:url] = v
+	end
+
+	opts.on("-n", "--no-module-lookup", "Disable module lookup on drupal.org") do |v|
+		options[:disable_lookup] = true
+	end
+
+	opts.on("-h", "--help", "Show this help") do 
+		puts opts
+		exit
+	end
+end
+
+opts.parse!
+
+if !options[:url].nil?
+	version = DrupalScan::getVersion(options[:url])
+	modules =	DrupalScan::enumerateModules(options[:url], (options[:disable_lookup] == true ? false : true))
+	
+	# Print version
+	puts "Version: #{version}"
+	
+	# Print modules
+	if modules.length <= 0
+		puts "No modules found"
+	end
+	
+	for k,v in modules
+		puts "Found '#{k}'"
+		if v.kind_of?(String)
+			puts " -> #{v}\n\n"
+		end
+	end
+else
+	puts opts
+	exit
+end
